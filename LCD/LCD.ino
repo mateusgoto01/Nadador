@@ -1,47 +1,21 @@
 #include <U8glib.h>
 
 
-// ======================================================================================================
-// --- Objetos ---
+#define buttom1 8
 U8GLIB_ST7920_128X64_1X u8g( 6,  //E
                              5,  //R/W
                              4,  //RS
                              7); //RST
 
-// ======================================================================================================
-// --- Variáveis Globais ---
-uint8_t draw_state = 0;
-
+uint8_t draw_state1 = 0;
+uint8_t draw_state2 = 0;
+int b1 = 0; // variavel para o nivel lógico
+int cb1 = LOW;
 
 void disp_graph_init();             //função de inicialização do display
 void u8g_frame();
 void draw();
-// --- Configurações Iniciais ---
-void setup() 
-{ 
-    disp_graph_init();    
-} //end setup
 
-
-// ======================================================================================================
-// --- Loop Infinito ---
-void loop() 
-{
-  u8g.firstPage();  
-    do {
-     draw();
-      } 
-    while( u8g.nextPage() );
-    delay(2000);
-    draw_state++;  
-    if(draw_state > 3)
-    draw_state = 0;
-    delay(1000);
-} //end loop
-
-
-// ======================================================================================================
-// --- Desenvolvimento das Funções ---
 void disp_graph_init()
 {
   if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
@@ -121,11 +95,64 @@ void u8g_frame4() {
   u8g.drawStr(88,50, "100WD");  
 }
 
-void draw(){
-  switch(draw_state){
+void draw1(){
+  switch(draw_state1){
     case 0: u8g_frame(); break;
     case 1: u8g_frame2(); break;
-    case 2: u8g_frame3(); break;
-    case 3: u8g_frame4(); break;
     }
   }
+void draw2(){
+  switch(draw_state2){
+    case 0: u8g_frame3(); break;
+    case 1: u8g_frame4(); break;
+    }
+  }  
+void goto_delay(int seconds){
+  unsigned long start_millis = millis();
+  unsigned long current_millis = 0;
+  unsigned long delta_t = 0;
+
+  while (delta_t < seconds*1000){
+    current_millis = millis();
+    delta_t = current_millis - start_millis;
+  }
+}  
+void setup() 
+{ 
+    pinMode(buttom1, INPUT);  
+    disp_graph_init();    
+} 
+
+void loop() 
+{
+  b1 = digitalRead(buttom1);
+  if (b1 == HIGH){
+      cb1 = !cb1; 
+    }
+    
+  if (cb1 == HIGH){
+      u8g.firstPage();  
+        do {
+        draw1();
+         } 
+        while( u8g.nextPage() );
+        goto_delay(1); //delay entre telas
+        draw_state1++;  
+        if(draw_state1 > 1)
+        draw_state1 = 0;
+    
+    }
+  else{
+    u8g.firstPage();  
+      do {
+      draw2();
+        } 
+      while( u8g.nextPage() );
+      goto_delay(1); //delay entre telas
+      draw_state2++;  
+      if(draw_state2 > 1)
+      draw_state2 = 0;
+    
+    }
+  
+} 
