@@ -13,18 +13,13 @@ U8GLIB_ST7920_128X64_1X u8g( 6,  //E
 uint8_t draw_state = 0;
 
 
-// ======================================================================================================
-void draw();                        //função para desenho de string
 void disp_graph_init();             //função de inicialização do display
-void u8g_r_frame(uint8_t a);
+void u8g_frame();
+void draw();
 // --- Configurações Iniciais ---
 void setup() 
-{
-
-    pinMode(13, OUTPUT);           
-    digitalWrite(13, HIGH);
-    disp_graph_init(); 
-    
+{ 
+    disp_graph_init();    
 } //end setup
 
 
@@ -34,10 +29,14 @@ void loop()
 {
   u8g.firstPage();  
     do {
-     u8g_r_frame();
-      } while( u8g.nextPage() );
-  
-    delay(100);
+     draw();
+      } 
+    while( u8g.nextPage() );
+    delay(2000);
+    draw_state++;  
+    if(draw_state > 3)
+    draw_state = 0;
+    delay(1000);
 } //end loop
 
 
@@ -57,31 +56,76 @@ void disp_graph_init()
   else if ( u8g.getMode() == U8G_MODE_HICOLOR ) {
     u8g.setHiColorByRGB(255,255,255);
   }
-
-} //end disp_graph_init
-void draw() 
-{
-  
-  u8g.setFont(u8g_font_unifont);
- 
-  u8g.drawStr( 30, 25, "Mecatron!");
-  
-} //end draw
-void u8g_r_frame() {
+}
+void u8g_frame() {
   u8g.drawRFrame(0, 0,65,32, 0);
   u8g.setFont(u8g_font_courB08);
-  u8g.drawStr(10,19, "00:00:00");
+  u8g.drawStr(10,19, "00:00:01");
   u8g.drawRFrame(64, 0,64,32, 0);
   u8g.setFont(u8g_font_helvB08);
   u8g.drawStr(85,19, "100m");
   u8g.drawRFrame(0, 31,43,33,  0);
   u8g.setFont(u8g_font_helvB08);
-  u8g.drawStr(10,50, "100N");
+  u8g.drawStr(6,50, "100mE");
   u8g.drawRFrame(42, 31,43,33, 0);
   u8g.setFont(u8g_font_helvB08);
   u8g.drawStr(46,50, "20BPM");
   u8g.drawRFrame(84, 31,44,33, 0);
   u8g.setFont(u8g_font_helvB08);
-  u8g.drawStr(93,50, "100N");
+  u8g.drawStr(91,50, "100mD");
+  
   
 }
+void u8g_frame2(){
+  u8g.drawRFrame(0, 0,128,32, 0);
+  u8g.drawStr(43,19, "00:00:02");
+  u8g.drawRFrame(0, 31,43,33,  0);
+  u8g.drawStr(6,50, "1/5 F");
+  u8g.drawRFrame(42, 31,43,33, 0);
+  u8g.setFont(u8g_font_helvB08);
+  u8g.drawStr(46,50, "100WT");
+  u8g.drawRFrame(84, 31,44,33, 0);
+  u8g.setFont(u8g_font_helvB08);
+  u8g.drawStr(88,50, "100Wm");
+  
+  }
+void u8g_frame3() {
+  u8g.drawRFrame(0, 0,65,32, 0);
+  u8g.setFont(u8g_font_courB08);
+  u8g.drawStr(10,19, "00:00:03");
+  u8g.drawRFrame(64, 0,64,32, 0);
+  u8g.setFont(u8g_font_helvB08);
+  u8g.drawStr(85,19, "100m");
+  u8g.drawRFrame(0, 31,43,33,  0);
+  u8g.setFont(u8g_font_helvB08);
+  u8g.drawStr(6,50, "100NE");
+  u8g.drawRFrame(42, 31,43,33, 0);
+  u8g.setFont(u8g_font_helvB08);
+  u8g.drawStr(46,50, "20BPM");
+  u8g.drawRFrame(84, 31,44,33, 0);
+  u8g.setFont(u8g_font_helvB08);
+  u8g.drawStr(91,50, "100ND");
+  
+  
+}
+void u8g_frame4() {
+  u8g.drawRFrame(0, 0,128,32, 0);
+  u8g.drawStr(43,19, "00:00:04");
+  u8g.drawRFrame(0, 31,43,33,  0);
+  u8g.drawStr(5,50, "123WE");
+  u8g.drawRFrame(42, 31,43,33, 0);
+  u8g.setFont(u8g_font_helvB08);
+  u8g.drawStr(46,50, "100WT");
+  u8g.drawRFrame(84, 31,44,33, 0);
+  u8g.setFont(u8g_font_helvB08);
+  u8g.drawStr(88,50, "100WD");  
+}
+
+void draw(){
+  switch(draw_state){
+    case 0: u8g_frame(); break;
+    case 1: u8g_frame2(); break;
+    case 2: u8g_frame3(); break;
+    case 3: u8g_frame4(); break;
+    }
+  }
