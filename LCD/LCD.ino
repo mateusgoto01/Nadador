@@ -2,11 +2,8 @@
 
 
 #define buttom1 8
-U8GLIB_ST7920_128X64_1X u8g( 6,  //E
-                             5,  //R/W
-                             4,  //RS
-                             7); //RST
-
+U8GLIB_ST7920_128X64_1X u8g( 6, 5, 4, 7)
+                           
 uint8_t draw_state1 = 0;
 uint8_t draw_state2 = 0;
 int b1 = 0; // variavel para o nivel lógico
@@ -116,7 +113,8 @@ void goto_delay(int seconds){
     current_millis = millis();
     delta_t = current_millis - start_millis;
   }
-}  
+}
+  
 void setup() 
 { 
     pinMode(buttom1, INPUT);  
