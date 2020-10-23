@@ -2,12 +2,12 @@
 
 
 #define buttom1 8
-U8GLIB_ST7920_128X64_1X u8g( 6, 5, 4, 7)
+U8GLIB_ST7920_128X64_1X u8g( 6, 5, 4, 7);
                            
 uint8_t draw_state1 = 0;
 uint8_t draw_state2 = 0;
-int b1 = 0; // variavel para o nivel lógico
-int cb1 = LOW;
+byte b1 = LOW; // variavel para o nivel lógico
+int cb1 = 0; 
 
 void disp_graph_init();             //função de inicialização do display
 void u8g_frame();
@@ -51,7 +51,7 @@ void u8g_frame2(){
   u8g.drawRFrame(0, 0,128,32, 0);
   u8g.drawStr(43,19, "00:00:02");
   u8g.drawRFrame(0, 31,43,33,  0);
-  u8g.drawStr(6,50, "1/5 F");
+  u8g.drawStr(8,50, "5 BM");
   u8g.drawRFrame(42, 31,43,33, 0);
   u8g.setFont(u8g_font_helvB08);
   u8g.drawStr(46,50, "100WT");
@@ -92,17 +92,27 @@ void u8g_frame4() {
   u8g.drawStr(88,50, "100WD");  
 }
 
-void draw1(){
-  switch(draw_state1){
+void draw1(int a){
+  switch(a){
     case 0: u8g_frame(); break;
     case 1: u8g_frame2(); break;
+    case 2: u8g_frame3(); break;
+    case 3: u8g_frame4(); break;
     }
   }
-void draw2(){
-  switch(draw_state2){
-    case 0: u8g_frame3(); break;
-    case 1: u8g_frame4(); break;
+void next_screen(){
+  b1 = digitalRead(buttom1);
+  if (b1 == HIGH) {
+      draw_state1 = draw_state1 + 1;
+      delay(100);
+      if(draw_state1 >3)
+      draw_state1 = 0;      
     }
+        u8g.firstPage();  
+        do {
+        draw1(draw_state1);
+         } 
+        while( u8g.nextPage() ); 
   }  
 void goto_delay(int seconds){
   unsigned long start_millis = millis();
@@ -117,40 +127,13 @@ void goto_delay(int seconds){
   
 void setup() 
 { 
-    pinMode(buttom1, INPUT);  
+    pinMode(buttom1, INPUT);
     disp_graph_init();    
 } 
 
 void loop() 
 {
-  b1 = digitalRead(buttom1);
-  if (b1 == HIGH){
-      cb1 = !cb1; 
-    }
     
-  if (cb1 == HIGH){
-      u8g.firstPage();  
-        do {
-        draw1();
-         } 
-        while( u8g.nextPage() );
-        goto_delay(1); //delay entre telas
-        draw_state1++;  
-        if(draw_state1 > 1)
-        draw_state1 = 0;
-    
-    }
-  else{
-    u8g.firstPage();  
-      do {
-      draw2();
-        } 
-      while( u8g.nextPage() );
-      goto_delay(1); //delay entre telas
-      draw_state2++;  
-      if(draw_state2 > 1)
-      draw_state2 = 0;
-    
-    }
-  
+  next_screen();
+   
 } 
