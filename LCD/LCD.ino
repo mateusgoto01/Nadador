@@ -4,9 +4,9 @@
 
 #define D01 8
 #define analog1 2
-#define D02 1
+#define D02 9
 #define analog2 3
-
+ interrupt()
 #define buttom1 A0
 U8GLIB_ST7920_128X64_1X u8g( 6, 5, 4, 7);
                            
@@ -148,7 +148,7 @@ void computeHMS(unsigned long duration) { // função do cronometro
   
   }
   sprintf(timer, "%02d:%02d:%02d", intHours, intMinutes, intSeconds);
-  delay(500);
+  delay(1000);
 }
 
 void disp_graph_init();             //função de inicialização do display
@@ -259,7 +259,7 @@ void next_screen(){
   
 void setup() 
 { 
-    Serial.begin(11570);
+    Serial.begin(115200);
     pinMode(buttom1, INPUT);
     disp_graph_init(); 
     loadcell_start();
@@ -267,8 +267,8 @@ void setup()
     pinMode(analog1, INPUT);
     pinMode(D02, INPUT);
     pinMode(analog2, INPUT);
-    attachInterrupt(0, contador_r, FALLING);
-    attachInterrupt(1, contador_l, FALLING);   
+    attachInterrupt(digitalPinToInterrupt(analog1), contador_r, FALLING);
+    attachInterrupt(digitalPinToInterrupt(analog2), contador_l, FALLING);   
 } 
 
 void loop() 
@@ -279,10 +279,10 @@ void loop()
   LoadCell_1.update();
   LoadCell_2.update();
   
-  if(millis() - timeold >= 2000){
+  if(millis() - timeold >= 1000){
     //Começo da contagem de pulsos
-    detachInterrupt(0);
-    detachInterrupt(1);
+    detachInterrupt(digitalPinToInterrupt(analog1));
+    detachInterrupt(digitalPinToInterrupt(analog2));
     //final da contagem de pulso
     //começo da load cell
     
@@ -303,23 +303,36 @@ void loop()
     //fim da load cell
     //Calculos necessários
     Serial.print("Peso direito:");
-    Serial.print(load1)
-    Serial.println("Peso Esquerdo");
-    Serial.print(load2)
-    dist_r = (pulsos_r/ppv)*(2*3.14*raio);
-    dtostrf(dist_r,2, 2, distR);
-    strdistR = String(distR) + "m";
+    Serial.println(load1);
+    Serial.print("Peso Esquerdo");
+    Serial.println(load2);
+    
+    dist_r = (pulsos_r/ppv)*(3.14*raio);
+    strdistR = String(dist_r, 2) + "m";
     strdistR.toCharArray(chardistR, 10);
-    
-    dist_l = (pulsos_l/ppv)*(2*3.14*raio);
-    dtostrf(dist_l,2, 2, distL);
-    strdistL = String(distL) + "m";
+    delay(10);
+    dist_l = (pulsos_l/ppv)*(3.14*raio);
+    strdistL = String(dist_l, 2) + "m";
     strdistL.toCharArray(chardistL, 10);
-
-    Serial.println("Distancia direita:", dist_r);
-    Serial.println("Distancia esquerda:",dist_l);
+    delay(10);
     
-    dist_t = ((pulsos_r2 + pulsos_l2)/ppv)*(2*3.14*raio);
+    Serial.print("pulso direita:");
+    Serial.println(pulsos_r);
+    Serial.print("Pulso esquerda:");
+    Serial.println(pulsos_l);
+    Serial.print("Distancia direita:");
+    Serial.println(dist_r);
+    Serial.print("Distancia esquerda:");
+    Serial.println(dist_l);
+
+    Serial.print("Distancia direita2:");
+    Serial.print(strdistR);
+    Serial.println(chardistR);
+    Serial.print("Distancia esquerda2:");
+    Serial.print(strdistL);
+    Serial.println(chardistL);
+    
+    dist_t = ((pulsos_r2 + pulsos_l2)/ppv)*(3.14*raio);
     intdist_t = dist_t;
     sprintf(distT, "%03dm", intdist_t);
     if(dist_r == 0 ){
@@ -350,10 +363,10 @@ void loop()
     strpotL = String(potL) + "W";
     strpotL.toCharArray(charpotL, 10); 
     
-    if(load1 > 10 or load1 >10){
+    if(load1 > 10 or load2 >10){
       count++;
       } 
-    BPM = (2*count)/60;
+    BPM = (2*count)*60;
     dtostrf(BPM,1, 1, bpm);
     strbpm = String(bpm) + "B/M";
     strbpm.toCharArray(charbpm, 10);
@@ -362,8 +375,8 @@ void loop()
     pulsos_r = 0;
     pulsos_l = 0;
     count=0;
-    attachInterrupt(0, contador_r, FALLING);
-    attachInterrupt(1, contador_l, FALLING);
+    attachInterrupt(digitalPinToInterrupt(analog1), contador_r, FALLING);
+    attachInterrupt(digitalPinToInterrupt(analog2), contador_l, FALLING);
     }  
   next_screen();
    
