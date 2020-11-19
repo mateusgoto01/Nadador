@@ -1,12 +1,13 @@
 #include <U8glib.h>
 #include <HX711_ADC.h>
 #include <stdio.h>
+#include <PinChangeInterrupt.h>
 
-#define D01 8
 #define analog1 2
+#define D01 3
+#define analog2 8
 #define D02 9
-#define analog2 3
- interrupt()
+
 #define buttom1 A0
 U8GLIB_ST7920_128X64_1X u8g( 6, 5, 4, 7);
                            
@@ -19,7 +20,7 @@ char distR[10];
 char distL[10];
 char distT[10];
 char bpm[10];
-char bracadas[10];
+float pace;
 char potT[10];
 char potM[10];
 char potR[10];
@@ -35,8 +36,8 @@ String strdistL;
 char charbpm[10];
 String strbpm;
 
-char charbracadas[10];
-String strbracadas;
+char charpace[10];
+String strpace;
 
 int intpotT;
 int intpotM;
@@ -70,7 +71,11 @@ float pot_m; //potência média
 float pot_r;
 float pot_l;
 int count; // contador de braçadas
+int count_t; //contaddor total
 
+float minutes;
+unsigned long minutes2;
+float dist_p;
 
 volatile byte pulsos_r = 0; //pulsos momentaneos direito
 unsigned long pulsos_r2 = 0; //pulsos totais direitos
@@ -148,7 +153,7 @@ void computeHMS(unsigned long duration) { // função do cronometro
   
   }
   sprintf(timer, "%02d:%02d:%02d", intHours, intMinutes, intSeconds);
-  delay(1000);
+  delay(500);
 }
 
 void disp_graph_init();             //função de inicialização do display
@@ -193,7 +198,7 @@ void u8g_frame2(){
   u8g.drawRFrame(0, 0,128,32, 0);
   u8g.drawStr(43,19, timer);
   u8g.drawRFrame(0, 31,43,33,  0);
-  u8g.drawStr(8,50, charbracadas);
+  u8g.drawStr(8,50, charpace);
   u8g.drawRFrame(42, 31,43,33, 0);
   u8g.setFont(u8g_font_helvB08);
   u8g.drawStr(46,50, potT);
@@ -268,22 +273,23 @@ void setup()
     pinMode(D02, INPUT);
     pinMode(analog2, INPUT);
     attachInterrupt(digitalPinToInterrupt(analog1), contador_r, FALLING);
-    attachInterrupt(digitalPinToInterrupt(analog2), contador_l, FALLING);   
+    attachPinChangeInterrupt(analog2, contador_l, FALLING);   
 } 
 
 void loop() 
 {
   cronometer = millis();
   computeHMS(cronometer);
-
-  LoadCell_1.update();
-  LoadCell_2.update();
+  minutes2 = millis();
+ 
   
   if(millis() - timeold >= 1000){
     //Começo da contagem de pulsos
     detachInterrupt(digitalPinToInterrupt(analog1));
-    detachInterrupt(digitalPinToInterrupt(analog2));
+    detachInterrupt(analog2);
     //final da contagem de pulso
+     LoadCell_1.update();
+     LoadCell_2.update();
     //começo da load cell
     
     
@@ -308,6 +314,7 @@ void loop()
     Serial.println(load2);
     
     dist_r = (pulsos_r/ppv)*(3.14*raio);
+    dist_p += dist_r;
     strdistR = String(dist_r, 2) + "m";
     strdistR.toCharArray(chardistR, 10);
     delay(10);
@@ -335,15 +342,6 @@ void loop()
     dist_t = ((pulsos_r2 + pulsos_l2)/ppv)*(3.14*raio);
     intdist_t = dist_t;
     sprintf(distT, "%03dm", intdist_t);
-    if(dist_r == 0 ){
-    br = 0;
-    };
-    if(dist_r != 0 ){
-    br = 100/ dist_r;
-    };
-    dtostrf(br, 1, 1, bracadas);
-    strbracadas = String(bracadas) + "BM";
-    strbracadas.toCharArray(charbracadas, 10);
   
     pot_t = (load1 + load2)*(dist_r + dist_l);
     intpotT= pot_t;
@@ -363,21 +361,49 @@ void loop()
     strpotL = String(potL) + "W";
     strpotL.toCharArray(charpotL, 10); 
     
-    if(load1 > 10 or load2 >10){
-      count++;
+    if(pulsos_r > 20 or pulsos_l > 20){
+      count++; 
       } 
-    BPM = (2*count)*60;
-    dtostrf(BPM,1, 1, bpm);
-    strbpm = String(bpm) + "B/M";
-    strbpm.toCharArray(charbpm, 10);
-    // End Loop
     timeold = millis();
     pulsos_r = 0;
     pulsos_l = 0;
-    count=0;
+    count_t++;
     attachInterrupt(digitalPinToInterrupt(analog1), contador_r, FALLING);
-    attachInterrupt(digitalPinToInterrupt(analog2), contador_l, FALLING);
-    }  
+    attachPinChangeInterrupt(analog2, contador_l, FALLING);
+    }
+    if(count_t >=6){
+      
+      BPM = (count)*60;
+      dtostrf(BPM,1, 0, bpm);
+      strbpm = String(bpm) + "B/M";
+      strbpm.toCharArray(charbpm, 10);
+      count_t = 0;
+      count = 0;
+         
+      };
+    if(count_t < 6){
+      BPM = 0;
+      dtostrf(BPM,1, 0, bpm);
+      strbpm = String(bpm) + "B/M";
+      strbpm.toCharArray(charbpm, 10);
+      };
+      
+    if(dist_p >= 100){
+
+      minutes = float(minutes2) / float(milliSecondsInMinute);
+      
+      pace = (minutes)/(dist_t);
+      
+      minutes2 = 0;
+      dist_t = 0; 
+      strpace = String(pace,2) + "BM";
+      strpace.toCharArray(charpace, 10);
+      };
+    if(dist_p >=100){
+      pace = 0;
+      strpace = String(pace,2) + "BM";
+      strpace.toCharArray(charpace, 10);
+      };  
   next_screen();
    
 } 
