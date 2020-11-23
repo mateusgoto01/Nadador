@@ -56,6 +56,7 @@ byte b1 = LOW; // variavel para o nivel lógico
 int cb1 = 0; 
 
 float raio = 0.5; // em metros
+float ppv = 20; // quantidade de furos em uma volta
 float dist_r = 0; //distância a cada braçada direita
 float dist_l = 0; //distância a cada braçada esquerda
 float dist_t = 0; // distância total 
@@ -82,7 +83,6 @@ unsigned long pulsos_r2 = 0; //pulsos totais direitos
 volatile byte pulsos_l = 0; //pulsos momentaneos esquerdo
 unsigned long pulsos_l2 = 0; //pulsos totais esquerdos
 unsigned long timeold = 0;
-float ppv = 20; // quantidade de furos em uma volta
 
 const int HX711_dout_1 = 13; //mcu > HX711 no 1 dout pin
 const int HX711_sck_1 = 12; //mcu > HX711 no 1 sck pin
@@ -273,7 +273,18 @@ void setup()
     pinMode(D02, INPUT);
     pinMode(analog2, INPUT);
     attachInterrupt(digitalPinToInterrupt(analog1), contador_r, FALLING);
-    attachPinChangeInterrupt(analog2, contador_l, FALLING);   
+    attachPinChangeInterrupt(analog2, contador_l, FALLING);
+
+    pace = 0;
+    strpace = String(pace,2);
+    strpace.toCharArray(charpace, 10);
+
+    BPM = 0;
+      dtostrf(BPM,1, 0, bpm);
+      strbpm = String(bpm) + "B/M";
+      strbpm.toCharArray(charbpm, 10);
+
+    
 } 
 
 void loop() 
@@ -381,29 +392,19 @@ void loop()
       count = 0;
          
       };
-    if(count_t < 6){
-      BPM = 0;
-      dtostrf(BPM,1, 0, bpm);
-      strbpm = String(bpm) + "B/M";
-      strbpm.toCharArray(charbpm, 10);
-      };
       
     if(dist_p >= 100){
 
       minutes = float(minutes2) / float(milliSecondsInMinute);
       
-      pace = (minutes)/(dist_t);
+      pace = (minutes)/(dist_p);
       
       minutes2 = 0;
-      dist_t = 0; 
-      strpace = String(pace,2) + "BM";
+      dist_p = 0.1; 
+      strpace = String(pace,2);
       strpace.toCharArray(charpace, 10);
       };
-    if(dist_p >=100){
-      pace = 0;
-      strpace = String(pace,2) + "BM";
-      strpace.toCharArray(charpace, 10);
-      };  
+
   next_screen();
    
 } 
