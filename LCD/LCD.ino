@@ -294,7 +294,7 @@ void loop()
   minutes2 = millis();
  
   
-  if(millis() - timeold >= 1000){
+  if(millis() - timeold >= 100){
     //Começo da contagem de pulsos
     detachInterrupt(digitalPinToInterrupt(analog1));
     detachInterrupt(analog2);

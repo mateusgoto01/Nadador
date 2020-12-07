@@ -90,7 +90,7 @@ void calibrate() {
   }
 
   Serial.println("Agora, coloque uma massa conhecida encima da estrutura");
-  Serial.println("Agora envie no Serial Monitor o peso dessa massa conhecida em KG. Exemplo: 0.5 ");
+  Serial.println("Agora envie no Serial Monitor o valor da força peso dessa massa conhecida em N. Exemplo: 5, para uma carga de prova de 0.5Kg");
 
   float known_mass = 0;
   _resume = false;
@@ -99,7 +99,7 @@ void calibrate() {
     if (Serial.available() > 0) {
       known_mass = Serial.parseFloat();
       if (known_mass != 0) {
-        Serial.print("A massa conhecida é: ");
+        Serial.print("O modulo da força peso é: ");
         Serial.println(known_mass);
         _resume = true;
       }
@@ -111,7 +111,7 @@ void calibrate() {
 
   Serial.print("O VALOR DE CALIGRAÇÃO É: ");
   Serial.print(newCalibrationValue);
-  Serial.println(", use esse valor de calibração (calFactor) para o codigo Cyclefy.ino");
+  Serial.println(", use esse valor de calibração (calFactor) para o codigo LCD.ino");
   Serial.print("Deseja salvar esse valor no EEPROM? (Não é necessário)");
   Serial.print(calVal_eepromAdress);
   Serial.println("? y/n");
