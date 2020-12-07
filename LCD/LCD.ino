@@ -8,7 +8,19 @@
 #define analog2 8
 #define D02 9
 
-#define buttom1 A0
+#define buttom1 A0 // Passar telas
+byte b1 = LOW; // variavel para o nivel lógico
+#define buttom2 A1 // Start
+byte b2_est = LOW;
+byte b2_est_cont = LOW;
+#define buttom3 A2
+byte b3_est = LOW;
+#define buttom4 A3
+byte b4_est = LOW;
+unsigned long last_time;
+unsigned long time_old2;
+unsigned long current_time;
+
 U8GLIB_ST7920_128X64_1X u8g( 6, 5, 4, 7);
                            
 uint8_t draw_state1 = 0;
@@ -52,7 +64,6 @@ char charpotL[10];
 String strpotL;
 
 // end
-byte b1 = LOW; // variavel para o nivel lógico
 int cb1 = 0; 
 
 float raio = 0.5; // em metros
@@ -93,6 +104,70 @@ HX711_ADC LoadCell_2(HX711_dout_2, HX711_sck_2); //HX711 2
 float calibrationValue_1; // calibration value load cell 1
 float calibrationValue_2; // calibration value load cell 2
 
+void config_lcd(){
+    b2_est = digitalRead(buttom2);
+    b3_est = digitalRead(buttom3);
+    b4_est = digitalRead(buttom4);
+    
+    if(b2_est == HIGH){
+
+        b2_est_cont = HIGH;
+        delay(500);
+      }
+    if(b3_est == HIGH){
+
+        b2_est_cont = LOW;
+        delay(500);
+      }
+  }
+void zero_point(){
+  
+    pace = 0;
+      strpace = String(pace,2);
+      strpace.toCharArray(charpace, 10);
+
+    BPM = 0;
+      dtostrf(BPM,1, 0, bpm);
+      strbpm = String(bpm) + "B/M";
+      strbpm.toCharArray(charbpm, 10);
+      
+    intload1 = 0;
+      sprintf(newtonR, "%03dN", intload1);
+    intload2 = 0;
+      sprintf(newtonL, "%03dN", intload2);
+
+    dist_r = 0;  
+      strdistR = String(dist_r, 2) + "m";
+      strdistR.toCharArray(chardistR, 10);
+    dist_l = 0;  
+      strdistR = String(dist_l, 2) + "m";
+      strdistR.toCharArray(chardistL, 10);
+    intdist_t = 0;
+    sprintf(distT, "%03dm", intdist_t);
+
+    intpotT= 0;
+    sprintf(potT, "%03dW", intpotT);
+    
+    intpotM = 0;
+    sprintf(potM, "%03dW", intpotM);
+
+    pot_r = 0;
+    dtostrf(pot_r,3, 0, potR);
+    strpotR = String(potR) + "W";
+    strpotR.toCharArray(charpotR, 10);
+    
+    pot_l = 0;
+    dtostrf(pot_l,3, 0, potL);
+    strpotL = String(potL) + "W";
+    strpotL.toCharArray(charpotL, 10);
+    
+    dist_t = 0;
+    minutes2 = 0;
+    dist_p = 0;
+    pulsos_r2 = 0;
+    pulsos_l2 = 0;
+    count_t = 0;
+   }
 void contador_r(){
     pulsos_r++;
     pulsos_r2++;
@@ -259,6 +334,7 @@ void next_screen(){
         draw1(draw_state1);
          } 
         while( u8g.nextPage() ); 
+    delay(500);
   }  
 
   
@@ -266,6 +342,7 @@ void setup()
 { 
     Serial.begin(115200);
     pinMode(buttom1, INPUT);
+    pinMode(buttom2, INPUT);
     disp_graph_init(); 
     loadcell_start();
     pinMode(D01, INPUT);
@@ -274,27 +351,29 @@ void setup()
     pinMode(analog2, INPUT);
     attachInterrupt(digitalPinToInterrupt(analog1), contador_r, FALLING);
     attachPinChangeInterrupt(analog2, contador_l, FALLING);
-
-    pace = 0;
-    strpace = String(pace,2);
-    strpace.toCharArray(charpace, 10);
-
-    BPM = 0;
-      dtostrf(BPM,1, 0, bpm);
-      strbpm = String(bpm) + "B/M";
-      strbpm.toCharArray(charbpm, 10);
+    zero_point();
 
     
 } 
 
 void loop() 
 {
-  cronometer = millis();
-  computeHMS(cronometer);
-  minutes2 = millis();
- 
   
-  if(millis() - timeold >= 100){
+  computeHMS(cronometer);
+  config_lcd();
+  Serial.print("Estado do botão2:");
+  Serial.println(b2_est);
+  Serial.print("Estado do botão fixo:");
+  Serial.println(b2_est_cont);
+  Serial.print("Estado do botão3:");
+  Serial.println(b3_est);
+  Serial.print("Estado do botão4:");
+  Serial.println(b4_est);
+  
+  if(millis() - timeold >= 100 && b2_est_cont == HIGH){
+    current_time = millis();
+    cronometer = current_time + last_time - time_old2;
+    minutes2 = current_time - time_old2;
     //Começo da contagem de pulsos
     detachInterrupt(digitalPinToInterrupt(analog1));
     detachInterrupt(analog2);
@@ -319,10 +398,10 @@ void loop()
     sprintf(newtonL, "%03dN", intload2);
     //fim da load cell
     //Calculos necessários
-    Serial.print("Peso direito:");
-    Serial.println(load1);
-    Serial.print("Peso Esquerdo");
-    Serial.println(load2);
+//    Serial.print("Peso direito:");
+//    Serial.println(load1);
+//    Serial.print("Peso Esquerdo");
+//    Serial.println(load2);
     
     dist_r = (pulsos_r/ppv)*(3.14*raio);
     dist_p += dist_r;
@@ -334,21 +413,21 @@ void loop()
     strdistL.toCharArray(chardistL, 10);
     delay(10);
     
-    Serial.print("pulso direita:");
-    Serial.println(pulsos_r);
-    Serial.print("Pulso esquerda:");
-    Serial.println(pulsos_l);
-    Serial.print("Distancia direita:");
-    Serial.println(dist_r);
-    Serial.print("Distancia esquerda:");
-    Serial.println(dist_l);
-
-    Serial.print("Distancia direita2:");
-    Serial.print(strdistR);
-    Serial.println(chardistR);
-    Serial.print("Distancia esquerda2:");
-    Serial.print(strdistL);
-    Serial.println(chardistL);
+//    Serial.print("pulso direita:");
+//    Serial.println(pulsos_r);
+//    Serial.print("Pulso esquerda:");
+//    Serial.println(pulsos_l);
+//    Serial.print("Distancia direita:");
+//    Serial.println(dist_r);
+//    Serial.print("Distancia esquerda:");
+//    Serial.println(dist_l);
+//
+//    Serial.print("Distancia direita2:");
+//    Serial.print(strdistR);
+//    Serial.println(chardistR);
+//    Serial.print("Distancia esquerda2:");
+//    Serial.print(strdistL);
+//    Serial.println(chardistL);
     
     dist_t = ((pulsos_r2 + pulsos_l2)/ppv)*(3.14*raio);
     intdist_t = dist_t;
@@ -381,7 +460,7 @@ void loop()
     count_t++;
     attachInterrupt(digitalPinToInterrupt(analog1), contador_r, FALLING);
     attachPinChangeInterrupt(analog2, contador_l, FALLING);
-    }
+
     if(count_t >=6){
       
       BPM = (count)*60;
@@ -404,7 +483,24 @@ void loop()
       strpace = String(pace,2);
       strpace.toCharArray(charpace, 10);
       };
-
+    }
+    if(b2_est_cont == LOW){
+      time_old2 = millis();
+      last_time = cronometer;
+        if(b4_est == HIGH){
+            zero_point();
+            cronometer = 0;
+            last_time = 0;
+            time_old2 = current_time; 
+          }
+      }
+    if(b4_est == HIGH){
+        zero_point();
+        last_time = 0;
+        time_old2 = current_time; 
+        delay(500);
+      
+      }
   next_screen();
-   
+  Serial.print(minutes2);
 } 
